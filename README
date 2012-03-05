@@ -1,3 +1,6 @@
+  /!\    this will only work to create deb for amd64
+ / ! \   so, if `uname -m` == 'x86_64', then go for it
+/  !  \
 This script rewrap the main rpm file so that you can use tsm on ubuntu.
 As this packages are not part of ubuntu or debian, I've put all the files under
 /opt/uau. If you want to use an other path, change accordingly OPT_PATH and
