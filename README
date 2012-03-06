@@ -10,14 +10,21 @@ prerequesite:
 - apt-get install fakeroot cpio rpm2cpio bash rsync wget
 
 usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
-untar eg: into ~/ubuntu/tsm/6.3.0.0
-put the script into ~/ubuntu/tsm/6.3.0.0
-download this script, and save it to ~/ubuntu/tsm/6.3.0.0
-cd ~/ubuntu/tsm/6.3.0.0
-chmod +x tsm4ubuntu
-./tsm4ubuntu
-sudo dpkg -i *deb
-
+ - untar eg: into ~/ubuntu/tsm/6.3.0.0
+ - download this script, and save it to ~/ubuntu/tsm/6.3.0.0
+ - edit tsm4ubuntu with the deb version accordingly to the version you are.
+   Since, it should be you first time, then put this in define_variable
+   ddeb_ver["api"]="0"
+   ddeb_ver["crypt"]="0"
+   ddeb_ver["ssl"]="0"
+   ddeb_ver["ba"]="0"
+   ddeb_ver["integration"]="0"
+ - then type
+   cd ~/ubuntu/tsm/6.3.0.0
+   chmod +x tsm4ubuntu
+   ./tsm4ubuntu
+   sudo dpkg -i *deb
+ - and smile big time
 
 The script is splitted in:
 - define variable : self explanatory
@@ -37,3 +44,6 @@ http://publib.boulder.ibm.com/infocenter/tsminfo/v6r3/index.jsp?topic=%2Fcom.ibm
  - *JBB* since it is the daemon based on the filepath.ko
  - *cit* since this looks like a real burden
  - FR since we speak english
+
+
+Hope it will helps.

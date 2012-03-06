@@ -589,8 +589,11 @@ echo -e "\nwrap_ba"
 echo "-------"
 wrap_ba
 
+# you can comment this without worry, since it is only related for
+# the University of Geneva. See the doc on github for more info
 echo -e "\nwrap_integration"
 echo "----------------"
+
 wrap_integration
 
 
