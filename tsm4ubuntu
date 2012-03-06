@@ -31,8 +31,8 @@ declare -Ag ddeb_ver
 ddeb_ver["api"]="0"
 ddeb_ver["crypt"]="0"
 ddeb_ver["ssl"]="0"
-ddeb_ver["ba"]="0"
-ddeb_ver["integration"]="0"
+ddeb_ver["ba"]="2"
+ddeb_ver["integration"]="2"
 }
 
 rpm2dir()
@@ -74,7 +74,8 @@ wrap_integration()
     # GUI NOTIFICATION start
     cat > ${DEB_BUILD}/${OPT_PATH}/tsm/bin/notify-send-tsm.start  << EOF
 #!/bin/bash
-notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png "Sauvegarde Start" \\
+# 60000 ms= 1min
+notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png --expire-time=60000 "Sauvegarde Start" \\
   "Lancement de la sauvegarde de votre machine par TSM sur les serveurs de l'UniGE."
 EOF
     #
@@ -84,7 +85,8 @@ EOF
     # GUI NOTIFICATION stop
     cat > ${DEB_BUILD}/${OPT_PATH}/tsm/bin/notify-send-tsm.stop  << EOF
 #!/bin/bash
-notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png "Sauvegarde Stop" \\
+# 1800000 ms= 30min
+notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png  --expire-time=1800000 "Sauvegarde Stop" \\
   "La sauvegarde de votre machines par TSM sur les seveurs de l'UniGE a abouti."
 EOF
     #
@@ -203,10 +205,6 @@ EOF
     #
     # construct the package
     fakeroot dpkg -b ${DEB_BUILD}
-    #
-    #
-    # return the name of the package constructed
-    return ${DEB_BUILD}.deb
 }
 
 ###########################################################
@@ -299,17 +297,30 @@ PIDFILE=/var/run/tsm.pid
 
 . /lib/lsb/init-functions
 
-case "$1" in
-  start)
+start_tsm()
+{
     log_begin_msg "Starting TSM scheduler ..."
     mkdir -p ${DSM_LOG}
     start-stop-daemon -Sqb --startas /usr/bin/dsmc --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- sched || log_end_msg 1
     log_end_msg 0
-    ;;
-  stop)
+}
+stop_tsm()
+{
     log_begin_msg "Stopping TSM scheduler ..."
     start-stop-daemon -Kqop ${PIDFILE} || log_end_msg 1
     log_end_msg 0
+}
+
+case "$1" in
+  start)
+    start_tsm
+    ;;
+  stop)
+    stop_tsm
+    ;;
+  restart)
+    stop_tsm
+    start_tsm
     ;;
   *)
     log_success_msg "Usage: /etc/init.d/tsm {start|stop}"
@@ -341,12 +352,38 @@ EOF
     #
     #
     # DEBIAN postinst
-    cat > ${DEB_BUILD}/DEBIAN/postinst << EOF
+    cat > ${DEB_BUILD}/DEBIAN/postinst << 'EOF'
 #!/bin/sh
 set -e
 
-if [ -x "/etc/init.d/tsm" ]; then
-	update-rc.d tsm defaults 91 09 >/dev/null || exit $?
+if [ "$1" = "configure" ]; then
+	ldconfig
+fi
+    
+#
+# check if there is a valid configuration
+if LC_ALL=C dsmc query session > /dev/null 2>&1 ; then
+    if LC_ALL=C dsmc query schedule 2>&1 | grep "There are no schedules associated with this node" > /dev/null ; then
+        echo " - tsm configuration is good and planning is disabled"
+        echo " - if you need a planning, configure it and then"
+        echo "   - update-rc.d tsm defaults"
+        echo "   - invoke-rc.d tsm start"
+        invoke-rc.d tsm stop > /dev/null
+        update-rc.d -f tsm remove >/dev/null
+    else
+        echo " - tsm configuration is good and planning is enabled"
+        echo " - enabling the tsm daemon"
+	    update-rc.d tsm defaults >/dev/null
+        invoke-rc.d tsm start || exit $?
+    fi
+else
+    echo " - tsm is not configured or the configuration is broken"
+    echo " - we will not launch the daemon tsm"
+    echo " - when tsm will be well configured and the schedule planned, do:"
+    echo "   - update-rc.d tsm defaults"
+    echo "   - invoke-rc.d tsm start"
+    invoke-rc.d tsm stop > /dev/null
+    update-rc.d -f tsm remove >/dev/null
 fi
 EOF
     #
@@ -368,10 +405,6 @@ EOF
     #
     # construct package
     fakeroot dpkg -b ${DEB_BUILD}
-    #
-    #
-    # return the name of the package constructed
-    return ${DEB_BUILD}.deb
 }
 
 
@@ -430,10 +463,6 @@ EOF
     #
     # construct the package
     fakeroot dpkg -b ${DEB_BUILD}
-    #
-    #
-    # return the name of the package constructed
-    return ${DEB_BUILD}.deb
 }
 
 
@@ -481,10 +510,6 @@ EOF
     #
     # construct the package
     fakeroot dpkg -b ${DEB_BUILD}
-    #
-    #
-    # return the name of the package constructed
-    return ${DEB_BUILD}.deb
 }
     
     
@@ -532,10 +557,6 @@ EOF
     #
     # construct the package
     fakeroot dpkg -b ${DEB_BUILD}
-    #
-    #
-    # return the name of the package constructed
-    return ${DEB_BUILD}.deb
 }
 
 
@@ -552,13 +573,8 @@ rpm2dir
 echo -e "\nlet's rewrap them all"
 echo "======================="
 
-echo -e "\nwrap_integration"
-echo "----------------"
-wrap_integration
-
 echo -e "\nwrap_ssl"
 echo "--------"
-
 wrap_ssl
 
 echo -e "\nwrap_crypt"
@@ -567,11 +583,18 @@ wrap_crypt
 
 echo -e "\nwrap_api"
 echo "--------"
-
 wrap_api
 
 echo -e "\nwrap_ba"
 echo "-------"
 wrap_ba
 
-echo -e "\ncheck the new package created and do fo eg: sudo dpkg -i *deb"
+echo -e "\nwrap_integration"
+echo "----------------"
+wrap_integration
+
+
+echo -e "\ncheck the new package created"
+echo      "============================="
+echo "do fo eg: sudo dpkg -i *deb"
+
