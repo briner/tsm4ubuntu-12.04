@@ -1,10 +1,15 @@
-  /!\    this will only work to create deb for amd64
- / ! \   so, if `uname -m` == 'x86_64', then go for it
-/  !  \
-This script rewrap the main rpm file so that you can use tsm on ubuntu.
-As this packages are not part of ubuntu or debian, I've put all the files under
-/opt/uau. If you want to use an other path, change accordingly OPT_PATH and
-rewrite the script where we define the soft link.
+  /!\   
+ / ! \    this will only work to create deb for amd64 
+/  !  \   so, if `uname -m` == 'x86_64', then go for it
+-------
+
+This script mainly rewrap the rpm file so that you can use it on ubuntu. Furtermore,
+it adds:
+ - tsm init script
+ - create entry in the menu for dsmj and dsmc
+ - dpkg-reconfigure of the "<ORG_NAME>-<TSM_NAME>-ba" package enable automatically
+   tsm as daemon if dsm.sys and the tsm server are configured for schedule.
+ - dsmc and dsmj works also as a normal user
 
 prerequesite:
 - apt-get install fakeroot cpio rpm2cpio bash rsync convert
@@ -23,21 +28,20 @@ usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
 The script is splitted in:
 - define variable : self explanatory
 - rpm2dir: extract some of the rpms to cpio_<directories>
+- wrap_crypt: create the crypt package
+- wrap_ssl: create the ssl package
+- wrap_ba: create the Backup Agent package
+- wrap_api: create the API package
 - wrap_integration: this part is only needed for the University of Geneva,
   as we have developped code to automate the creation and the management of
   tsm account. So you don't need to care about this part
-- wrap_ba: create the Backup Agent package
-- wrap_api: create the API package
-- wrap_crypt: create the crypt package
-- wrap_ssl: create the ssl package
 
-what are each rpm for, and which rpm should I rewrap ?
-Our decision will be based on this document
+So why did not we wrapped other RPMs ?
+Our decision is based on this document
 http://publib.boulder.ibm.com/infocenter/tsminfo/v6r3/index.jsp?topic=%2Fcom.ibm.itsm.client.doc%2Ft_inst_linuxx86client.html
  - *filepath* since it brings only filepath.ko for a special kernel
  - *JBB* since it is the daemon based on the filepath.ko
  - *cit* since this looks like a real burden
  - FR since we speak english
-
 
 Hope it will helps.

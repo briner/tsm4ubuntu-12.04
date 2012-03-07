@@ -40,13 +40,14 @@ define_variable()
 
     #
     # this variable define of the version of packaging for each element
+    # you should be "0" for your first time.
     unset ddeb_ver
     declare -Ag ddeb_ver
-    ddeb_ver["crypt"]="0"
-    ddeb_ver["ssl"]="0"
-    ddeb_ver["ba"]="2"
-    ddeb_ver["api"]="0"
-    ddeb_ver["integration"]="2" ; # this is only used at the University of Geneva
+    ddeb_ver["crypt"]="1" 
+    ddeb_ver["ssl"]="1"
+    ddeb_ver["ba"]="3"
+    ddeb_ver["api"]="1"
+    ddeb_ver["integration"]="3" ; # this is only used at the University of Geneva
 }
 
 rpm2dir()
@@ -351,32 +352,31 @@ set -e
 
 if [ "$1" = "configure" ]; then
 	ldconfig
-fi
-    
-#
-# check if there is a valid configuration
-if LC_ALL=C dsmc query session > /dev/null 2>&1 ; then
-    if LC_ALL=C dsmc query schedule 2>&1 | grep "There are no schedules associated with this node" > /dev/null ; then
-        echo " - tsm configuration is good and planning is disabled"
-        echo " - if you need a planning, configure it and then"
+    #
+    # check if there is a valid configuration
+    if LC_ALL=C dsmc query session > /dev/null 2>&1 ; then
+        if LC_ALL=C dsmc query schedule 2>&1 | grep "There are no schedules associated with this node" > /dev/null ; then
+            echo " - tsm configuration is good and planning is disabled"
+            echo " - if you need a planning, configure it and then"
+            echo "   - update-rc.d tsm defaults"
+            echo "   - invoke-rc.d tsm start"
+            invoke-rc.d tsm stop > /dev/null
+            update-rc.d -f tsm remove >/dev/null
+        else
+            echo " - tsm configuration is good and planning is enabled"
+            echo " - enabling the tsm daemon"
+    	    update-rc.d tsm defaults >/dev/null
+            invoke-rc.d tsm start || exit $?
+        fi
+    else
+        echo " - tsm is not configured or the configuration is broken"
+        echo " - we will not launch the daemon tsm"
+        echo " - when tsm will be well configured and the schedule planned, do:"
         echo "   - update-rc.d tsm defaults"
         echo "   - invoke-rc.d tsm start"
         invoke-rc.d tsm stop > /dev/null
         update-rc.d -f tsm remove >/dev/null
-    else
-        echo " - tsm configuration is good and planning is enabled"
-        echo " - enabling the tsm daemon"
-	    update-rc.d tsm defaults >/dev/null
-        invoke-rc.d tsm start || exit $?
     fi
-else
-    echo " - tsm is not configured or the configuration is broken"
-    echo " - we will not launch the daemon tsm"
-    echo " - when tsm will be well configured and the schedule planned, do:"
-    echo "   - update-rc.d tsm defaults"
-    echo "   - invoke-rc.d tsm start"
-    invoke-rc.d tsm stop > /dev/null
-    update-rc.d -f tsm remove >/dev/null
 fi
 EOF
     #
@@ -388,9 +388,12 @@ EOF
 #!/bin/sh
 set -e
 
-if [ "$1" = "purge" ] ; then
-	update-rc.d tsm remove >/dev/null || exit $?
+if [ "$1" = "remove" ]; then
+	ldconfig
+    invoke-rc.d tsm stop > /dev/null
+	update-rc.d tsm remove >/dev/null
 fi
+
 EOF
     #
     chmod a+x ${DEB_BUILD}/DEBIAN/postrm
