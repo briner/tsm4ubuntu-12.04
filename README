@@ -7,7 +7,7 @@ As this packages are not part of ubuntu or debian, I've put all the files under
 rewrite the script where we define the soft link.
 
 prerequesite:
-- apt-get install fakeroot cpio rpm2cpio bash rsync wget
+- apt-get install fakeroot cpio rpm2cpio bash rsync convert
 
 usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
  - untar eg: into ~/ubuntu/tsm/6.3.0.0
