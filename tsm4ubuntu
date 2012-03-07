@@ -11,29 +11,42 @@ fi
 
 
 define_variable()
-{
-    TSM_NAME=TSM
-    TSM_VER=6.3.0
+{   
+    # TSM_ROOT defines the path where the rpms are. tsm4ubuntu will work
+    # in this directory
     TSM_ROOT=~/ubuntu/tsm/6.3.0.0
-    DO_CPIO=0
-    SHORT_ORG=UniGE
-    OPT_PATH='opt/uau'
+
+    # the name of the package will be
+    # <short_org>-<TSM_NAME>-{ba,api..}_<TSM_VER>-<DDEB_VER>
+    # so for the current case: unige-tsm-ba_6.3.0-2.deb
+    TSM_NAME=TSM ; # usually it is "TSM"
+    TSM_VER=6.3.0
+    SHORT_ORG=UniGE ; # a short name of your organisation
+
+    # where the tsm files will be installed without the first and the last "/"
+    OPT_PATH='opt/uau/tsm' ; # usually it is "opt/tivoli/tsm"
+
+    # email of the packager of these
     EMAIL_MAINTAINER='Cedric BRINER <Cedric.Briner@UniGE.ch>'
     
+    #
+    # this variable define the name of the rpm for each element 
     unset drpm
     declare -Ag drpm
-    drpm["api"]="TIVsm-API64.x86_64.rpm"
     drpm["crypt"]="gskcrypt64-8.0.14.11.linux.x86_64.rpm"
     drpm["ssl"]="gskssl64-8.0.14.11.linux.x86_64.rpm"
+    drpm["api"]="TIVsm-API64.x86_64.rpm"
     drpm["ba"]="TIVsm-BA.x86_64.rpm"
 
+    #
+    # this variable define of the version of packaging for each element
     unset ddeb_ver
     declare -Ag ddeb_ver
-    ddeb_ver["api"]="0"
     ddeb_ver["crypt"]="0"
     ddeb_ver["ssl"]="0"
     ddeb_ver["ba"]="2"
-    ddeb_ver["integration"]="2"
+    ddeb_ver["api"]="0"
+    ddeb_ver["integration"]="2" ; # this is only used at the University of Geneva
 }
 
 rpm2dir()
@@ -52,10 +65,11 @@ rpm2dir()
 
 
 ###########################################################
-# INTEGRATION
-wrap_integration()
+# gskcrypt64
+#
+wrap_crypt()
 {
-    OBJ=integration
+    OBJ=crypt
 
     # constructed variable
     define_variable
@@ -63,129 +77,11 @@ wrap_integration()
     DEBNAME=${SHORT_ORG,,}-${TSM_NAME,,}-${OBJ}
     DEB_BUILD=${TSM_ROOT}/${DEBNAME}_${TSM_VER}-${DEB_VER}
 
-
     cd ${TSM_ROOT}
 
     [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
-    mkdir -p ${DEB_BUILD}/{etc/tsm,usr/share/pixmaps,usr/share/applications}
-    mkdir -p ${DEB_BUILD}/{usr/bin,DEBIAN,${OPT_PATH}/tsm/bin}
-
-    #
-    #
-    # GUI NOTIFICATION start
-    cat > ${DEB_BUILD}/${OPT_PATH}/tsm/bin/notify-send-tsm.start  << EOF
-#!/bin/bash
-# 60000 ms= 1min
-notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png --expire-time=60000 "Sauvegarde Start" \\
-  "Lancement de la sauvegarde de votre machine par TSM sur les serveurs de l'UniGE."
-EOF
-    #
-    chmod a+x ${DEB_BUILD}/${OPT_PATH}/tsm/bin/notify-send-tsm.start
-    #
-    #
-    # GUI NOTIFICATION stop
-    cat > ${DEB_BUILD}/${OPT_PATH}/tsm/bin/notify-send-tsm.stop  << EOF
-#!/bin/bash
-# 1800000 ms= 30min
-notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png  --expire-time=1800000 "Sauvegarde Stop" \\
-  "La sauvegarde de votre machines par TSM sur les seveurs de l'UniGE a abouti."
-EOF
-    #
-    chmod a+x ${DEB_BUILD}/${OPT_PATH}/tsm/bin/notify-send-tsm.stop
-    #
-    #
-    # TSM CONFIGURE TOOL WRITTEN BY J.-M. NAEF
-    cat > ${DEB_BUILD}/usr/bin/tsm-configure << EOF
-#!/bin/bash
-exec javaws "http://sos.unige.ch/eztsm/apps/servlet/jws?ezubuntu"
-EOF
-    #
-    chmod a+x ${DEB_BUILD}/usr/bin/tsm-configure
-    #
-    #
-    # FIRST SHOOT TSM LAUNCH
-    cat > ${DEB_BUILD}/usr/bin/tsm << 'EOF'
-#!/bin/bash
-#
-#
-[ -f /etc/tsm/dsm.sys -a -f /etc/tsm/dsm.opt ] && exec dsmj
-#
-#
-echo $LANG | grep -q fr
-if [ $? -eq 0 ]
-then
-    title="Configurer TSM ?"
-    text="TSM n'est pas configurer. Nous vous suggérons de lancer \"TSM configure\".\
-\n\t- Clic \"Oui\" pour configurer TSM (recommandé).\
-\n\t- Clic \"Non\" pour lancer l'application TSM."
-else
-    title="Configure TSM ?"
-    text="TSM is not yet configured. We suggest you to configure it with the \"TSM configuration\".\
-\n\t- Clic \"Yes\" to configure it (recommended).\
-\n\t- Clic \"No\" to launch the TSM application."
-fi
-zenity --title="$title" --question --text="$text"
-#
-#
-if [ $? -eq 0 ]
-then
-   exec tsm-configure
-else
-   exec dsmj
-fi
-EOF
-    #
-    chmod a+x  ${DEB_BUILD}/usr/bin/tsm
-    #
-    #
-    # DESKTOP tsm-configure
-    wget -q -O ${DEB_BUILD}/usr/share/pixmaps/tsm-configure.png http://ubuntu.unige.ch/img/icon/tsm-configure.png
-    cat > ${DEB_BUILD}/usr/share/applications/tsm-configure.desktop << EOF
-[Desktop Entry]
-Name=tsm-configure
-Comment=Configure TSM the UniGE way
-Comment[fr]=Configurer TSM à la sauce UniGE
-Exec=tsm-configure
-Icon=tsm-configure.png
-Terminal=false
-Type=Application
-Categories=System;ubuntu-at-unige;
-EOF
-    #
-    #
-    # DESKTOP tsm
-    wget -q -O ${DEB_BUILD}/usr/share/pixmaps/tsm.png http://ubuntu.unige.ch/img/icon/tsm.png
-    cat > ${DEB_BUILD}/usr/share/applications/tsm.desktop  << EOF
-[Desktop Entry]
-Name=tsm
-Comment=This is a backup solution @ UniGE
-Exec=tsm
-Icon=tsm.png
-Terminal=false
-Type=Application
-Categories=System;ubuntu-at-unige;
-EOF
-    #
-    #
-    # DSM.SYS
-    cat  > ${DEB_BUILD}/etc/tsm/dsm.sys.example << EOF
-SErvername sos5
- COMMMethod         TCPip
- TCPPort           1505
- TCPServeraddress  sos5.unige.ch
- NODENAME          cb10-briner
- PASSWORDACCESS    generate
- SCHEDLOGRetention 7 D
- PRENSChedulecmd     /${OPT_PATH}/tsm/bin/notify-send-tsm.start
- POSTNSChedulecmd    /${OPT_PATH}/tsm/bin/notify-send-tsm.stop
-EOF
-    #
-    #
-    # DSM.OPT
-    cat  > ${DEB_BUILD}/etc/tsm/dsm.opt.example << EOF
-SErvername sos5
-DOMAIN     ALL-LOCAL
-EOF
+    mkdir -p ${DEB_BUILD}/{DEBIAN,${OPT_PATH}/gsk8_64}
+    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/usr/local/ibm/gsk8_64/ ${DEB_BUILD}/${OPT_PATH}/gsk8_64/
     #
     #
     # DEBIAN control
@@ -193,12 +89,52 @@ EOF
 Package: ${DEBNAME}
 Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
-Depends: libnotify-bin, ubuntu-at-unige, zenity, ${SHORT_ORG,,}-${TSM_NAME,,}-ba
 Maintainer: ${EMAIL_MAINTAINER}
 Section: main
 Priority: extra
-Description: integration for TSM @ ${SHORT_ORG}
- Integration for TSM
+Description: gskcrypt64 for ${TSM_NAME} @ ${SHORT_ORG}
+    Crypto Library for ${TSM_NAME}
+    TSM stands for Tivoli Storage Manager and it is a solution for backuping is
+    machine at ${SHORT_ORG}.
+EOF
+    #
+    #
+    # construct the package
+    fakeroot dpkg -b ${DEB_BUILD}
+}
+
+
+
+###########################################################
+# gskssl64
+#
+wrap_ssl()
+{
+    OBJ=ssl
+
+    # constructed variable
+    define_variable
+    DEB_VER=${ddeb_ver[${OBJ}]}
+    DEBNAME=${SHORT_ORG,,}-${TSM_NAME,,}-${OBJ}
+    DEB_BUILD=${TSM_ROOT}/${DEBNAME}_${TSM_VER}-${DEB_VER}
+
+    cd ${TSM_ROOT}
+
+    [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
+    mkdir -p ${DEB_BUILD}/{DEBIAN,${OPT_PATH}/gsk8_64}
+    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/usr/local/ibm/gsk8_64/ ${DEB_BUILD}/${OPT_PATH}/gsk8_64/
+    #
+    #
+    # DEBIAN control
+    cat > ${DEB_BUILD}/DEBIAN/control << EOF
+Package: ${DEBNAME}
+Version: ${TSM_VER}-${DEB_VER}
+Architecture: amd64
+Maintainer: ${EMAIL_MAINTAINER}
+Section: main
+Priority: extra
+Description: gskssl64 for ${TSM_NAME} @ ${SHORT_ORG}
+ SSL Library for ${TSM_NAME}
  TSM stands for Tivoli Storage Manager and it is a solution for backuping is
  machine at ${SHORT_ORG}.
 EOF
@@ -207,6 +143,61 @@ EOF
     # construct the package
     fakeroot dpkg -b ${DEB_BUILD}
 }
+
+
+
+###########################################################
+# API
+#
+wrap_api()
+{
+    OBJ=api
+
+    # constructed variable
+    define_variable
+    DEB_VER=${ddeb_ver[${OBJ}]}
+    DEBNAME=${SHORT_ORG,,}-${TSM_NAME,,}-${OBJ}
+    DEB_BUILD=${TSM_ROOT}/${DEBNAME}_${TSM_VER}-${DEB_VER}
+
+    cd ${TSM_ROOT}
+
+    [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
+    mkdir -p ${DEB_BUILD}/{DEBIAN,${OPT_PATH}/client}
+    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/opt/tivoli/tsm/client/ ${DEB_BUILD}/${OPT_PATH}/client/
+    #
+    rsync -aHl --force --delete cpio_${drpm[${OBJ}]%.rpm}/usr/lib64/ ${DEB_BUILD}/${OPT_PATH}/lib/
+    cd ${DEB_BUILD}/${OPT_PATH}/lib/
+    # relink to the good position the library
+    for map in $(ls -l * | \
+                 sed "s|[[:blank:]]\{2\}| |g" | \
+                 cut -d ' ' -f9- | \
+                 sed "s| -> |<==>| ;  s|/../opt/tivoli/tsm/|/|" ) ; do
+       target=$(echo $map | sed 's|.*<==>||')
+       link_name=$(echo $map | sed 's|<==>.*||')
+       ln -sf ${target} ${link_name}
+    done
+    cd - > /dev/null
+    #
+    #
+    cat > ${DEB_BUILD}/DEBIAN/control << EOF
+Package: ${DEBNAME}
+Version: ${TSM_VER}-${DEB_VER}
+Architecture: amd64
+Maintainer: ${EMAIL_MAINTAINER}
+Section: main
+Priority: extra
+Description: api for ${TSM_NAME} @ ${SHORT_ORG}
+ API Library for ${TSM_NAME}
+ TSM stands for Tivoli Storage Manager and it is a solution for backuping is
+ machine at ${SHORT_ORG}.
+EOF
+    #
+    #
+    # construct the package
+    fakeroot dpkg -b ${DEB_BUILD}
+}
+
+
 
 ###########################################################
 # BA
@@ -224,22 +215,22 @@ wrap_ba()
     cd ${TSM_ROOT}
 
     [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
-    mkdir -p ${DEB_BUILD}/{DEBIAN,usr/bin,var/log/tsm,etc/init.d,${OPT_PATH}/tsm/bin}
+    mkdir -p ${DEB_BUILD}/{DEBIAN,usr/bin,var/log/tsm,etc/init.d,${OPT_PATH}/bin}
     mkdir -p ${DEB_BUILD}/{usr/share/pixmaps,usr/share/applications}
-    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/opt/tivoli/tsm/ ${DEB_BUILD}/${OPT_PATH}/tsm/
+    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/opt/tivoli/tsm/ ${DEB_BUILD}/${OPT_PATH}/
     #
     #
     # to remove the error:
     # ANS0102W Unable to open the message repository
     #   /opt/uau/tsm/client/ba/bin//EN_US/dsmclientV3.cat.
     #   The American English repository will be used instead.
-    cd ${DEB_BUILD}/${OPT_PATH}/tsm/client/ba/bin
+    cd ${DEB_BUILD}/${OPT_PATH}/client/ba/bin
     ln -s ../../lang/EN_US
     cd ${TSM_ROOT}
     #
     #
     # LINK /etc/tsm ON ../tsm/client/ba/bin
-    cd ${DEB_BUILD}/${OPT_PATH}/tsm/client/ba/bin
+    cd ${DEB_BUILD}/${OPT_PATH}/client/ba/bin
     ln -s /etc/tsm/dsm.opt .
     ln -s /etc/tsm/dsm.sys .
     cd ${TSM_ROOT}
@@ -247,28 +238,28 @@ wrap_ba()
     #
     # WRAPPER to easy the install of bin on /usr/bin and to
     # let the agent to use this environment when passinf from user to root
-    cat > ${DEB_BUILD}/${OPT_PATH}/tsm/bin/tsm-wrapper << EOF
+    cat > ${DEB_BUILD}/${OPT_PATH}/bin/tsm-wrapper << EOF
 #!/bin/bash
 # dsmj can use openjdk wahou # to force the use of Sun's Java
 # dsmj can use openjdk wahou # export PATH=/usr/lib/jvm/java-6-sun/bin/:$PATH
-export DSM_DIR=/${OPT_PATH}/tsm/client/ba/bin/
+export DSM_DIR=/${OPT_PATH}/client/ba/bin/
 export LANG=en_US
 export LC_TYPE=en_US
-export LD_LIBRARY_PATH="/${OPT_PATH}/tsm/client/api/bin64:\
-/${OPT_PATH}/tsm/gsk8/lib/:\
-/${OPT_PATH}/tsm/lib"
+export LD_LIBRARY_PATH="/${OPT_PATH}/client/api/bin64:\
+/${OPT_PATH}/gsk8/lib/:\
+/${OPT_PATH}/lib/"
 
 appname=\$(basename \$0)
 exec \${DSM_DIR}/\${appname} \$@
 EOF
-chmod a+x ${DEB_BUILD}/${OPT_PATH}/tsm/bin/tsm-wrapper
+chmod a+x ${DEB_BUILD}/${OPT_PATH}/bin/tsm-wrapper
     #
     #
     # LDCONFIG
     mkdir -p ${DEB_BUILD}/etc/ld.so.conf.d
-    cat > ${DEB_BUILD}/etc/ld.so.conf.d/uau-tsm.conf << EOF
-/${OPT_PATH}/tsm/client/api/bin64
-/${OPT_PATH}/tsm/gsk8_64/lib64
+    cat > ${DEB_BUILD}/etc/ld.so.conf.d/${SHORT_ORG,,}-${TSM_NAME,,}.conf << EOF
+/${OPT_PATH}/client/api/bin64
+/${OPT_PATH}/gsk8_64/lib64
 /${OPT_PATH}/lib
 EOF
     #
@@ -276,7 +267,7 @@ EOF
     # LINK THE EXECUTABLE TO THE WRAPPER
     cd ${DEB_BUILD}/usr/bin
     for f in dsmadmc  dsmagent  dsmc  dsmcad  dsmj  dsmswitch  dsmtca  dsmtrace ; do
-        ln -sf /${OPT_PATH}/tsm/bin/tsm-wrapper ${f}; done
+        ln -sf /${OPT_PATH}/bin/tsm-wrapper ${f}; done
     cd ${TSM_ROOT}
     #
     #
@@ -303,7 +294,7 @@ start_tsm()
 {
     log_begin_msg "Starting TSM scheduler ..."
     mkdir -p ${DSM_LOG}
-    start-stop-daemon -Sqb --startas /usr/bin/dsmc --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- sched || log_end_msg 1
+    start-stop-daemon -Sqb --startas /usr/bin/dsmc --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- schedule || log_end_msg 1
     log_end_msg 0
 }
 stop_tsm()
@@ -346,8 +337,8 @@ Depends: ${DEPENDS}
 Maintainer: ${EMAIL_MAINTAINER}
 Section: main
 Priority: extra
-Description: ba for TSM @ ${SHORT_ORG}
- Backup Agent for TSM
+Description: ba for ${TSM_NAME} @ ${SHORT_ORG}
+ Backup Agent for ${TSM_NAME}
  TSM stands for Tivoli Storage Manager and it is a solution for backuping is
  machine at ${SHORT_ORG}.
 EOF
@@ -436,14 +427,12 @@ EOF
 }
 
 
+
 ###########################################################
-# API
-#
-
-
-wrap_api()
+# INTEGRATION
+wrap_integration()
 {
-    OBJ=api
+    OBJ=integration
 
     # constructed variable
     define_variable
@@ -451,39 +440,142 @@ wrap_api()
     DEBNAME=${SHORT_ORG,,}-${TSM_NAME,,}-${OBJ}
     DEB_BUILD=${TSM_ROOT}/${DEBNAME}_${TSM_VER}-${DEB_VER}
 
+
     cd ${TSM_ROOT}
 
     [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
-    mkdir -p ${DEB_BUILD}/{DEBIAN,${OPT_PATH}/tsm/client,${OPT_PATH}/lib}
-    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/opt/tivoli/tsm/client/ ${DEB_BUILD}/${OPT_PATH}/tsm/client/
-    #
-    rsync -aHl --force --delete cpio_${drpm[${OBJ}]%.rpm}/usr/lib64/ ${DEB_BUILD}/${OPT_PATH}/lib/
-    cd ${DEB_BUILD}/${OPT_PATH}/lib/
-    # relink to the good position the library
-    for map in $(ls -l * | \
-                 sed "s|[[:blank:]]\{2\}| |g" | \
-                 cut -d ' ' -f9- | \
-                 sed "s| -> |<==>| ;  s|../../opt/tivoli/|../|" ) ; do
-       target=$(echo $map | sed 's|.*<==>||')
-       link_name=$(echo $map | sed 's|<==>.*||')
-       ln -sf ${target} ${link_name}
-    done
-    # add library to /opt/uau/lib so that /opt/uau/tsm/client/ba/bin/dsmtca
-    for dsmtcalib in libgpfs.so libdmapi.so ; do
-       ln -sf '../tsm/client/api/bin64/'${dsmtcalib}
-    done
-    cd -
+    mkdir -p ${DEB_BUILD}/{etc/tsm,usr/share/pixmaps,usr/share/applications}
+    mkdir -p ${DEB_BUILD}/{usr/bin,DEBIAN,${OPT_PATH}/bin}
+
     #
     #
+    # GUI NOTIFICATION start
+    cat > ${DEB_BUILD}/${OPT_PATH}/bin/notify-send-tsm.start  << EOF
+#!/bin/bash
+# 60000 ms= 1min
+notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png --expire-time=60000 "Sauvegarde Start" \\
+  "Lancement de la sauvegarde de votre machine par TSM sur les serveurs de l'UniGE."
+EOF
+    #
+    chmod a+x ${DEB_BUILD}/${OPT_PATH}/bin/notify-send-tsm.start
+    #
+    #
+    # GUI NOTIFICATION stop
+    cat > ${DEB_BUILD}/${OPT_PATH}/bin/notify-send-tsm.stop  << EOF
+#!/bin/bash
+# 1800000 ms= 30min
+notify-send -i /usr/share/pixmaps/ubuntu-at-unige.png  --expire-time=1800000 "Sauvegarde Stop" \\
+  "La sauvegarde de votre machines par TSM sur les seveurs de l'UniGE a abouti."
+EOF
+    #
+    chmod a+x ${DEB_BUILD}/${OPT_PATH}/bin/notify-send-tsm.stop
+    #
+    #
+    # TSM CONFIGURE TOOL WRITTEN BY J.-M. NAEF
+    cat > ${DEB_BUILD}/usr/bin/tsm-configure << EOF
+#!/bin/bash
+exec javaws "http://sos.unige.ch/eztsm/apps/servlet/jws?ezubuntu"
+EOF
+    #
+    chmod a+x ${DEB_BUILD}/usr/bin/tsm-configure
+    #
+    #
+    # FIRST SHOOT TSM LAUNCH
+    cat > ${DEB_BUILD}/usr/bin/tsm << 'EOF'
+#!/bin/bash
+#
+#
+[ -f /etc/tsm/dsm.sys -a -f /etc/tsm/dsm.opt ] && exec dsmj
+#
+#
+echo $LANG | grep -q fr
+if [ $? -eq 0 ]
+then
+    title="Configurer TSM ?"
+    text="TSM n'est pas configurer. Nous vous suggérons de lancer \"TSM configure\".\
+\n\t- Clic \"Oui\" pour configurer TSM (recommandé).\
+\n\t- Clic \"Non\" pour lancer l'application TSM."
+else
+    title="Configure TSM ?"
+    text="TSM is not yet configured. We suggest you to configure it with the \"TSM configuration\".\
+\n\t- Clic \"Yes\" to configure it (recommended).\
+\n\t- Clic \"No\" to launch the TSM application."
+fi
+zenity --title="$title" --question --text="$text"
+#
+#
+if [ $? -eq 0 ]
+then
+   exec tsm-configure
+else
+   exec dsmj
+fi
+EOF
+    #
+    chmod a+x  ${DEB_BUILD}/usr/bin/tsm
+    #
+    #
+    # DESKTOP tsm-configure
+    wget -q -O ${DEB_BUILD}/usr/share/pixmaps/tsm-configure.png http://ubuntu.unige.ch/img/icon/tsm-configure.png
+    cat > ${DEB_BUILD}/usr/share/applications/tsm-configure.desktop << EOF
+[Desktop Entry]
+Name=tsm-configure
+Comment=Configure TSM the UniGE way
+Comment[fr]=Configurer TSM à la sauce UniGE
+Exec=tsm-configure
+Icon=tsm-configure.png
+Terminal=false
+Type=Application
+Categories=System;ubuntu-at-unige;
+EOF
+    #
+    #
+    # DESKTOP tsm
+    wget -q -O ${DEB_BUILD}/usr/share/pixmaps/tsm.png http://ubuntu.unige.ch/img/icon/tsm.png
+    cat > ${DEB_BUILD}/usr/share/applications/tsm.desktop  << EOF
+[Desktop Entry]
+Name=tsm
+Comment=This is a backup solution @ ${SHORT_ORG}
+Exec=tsm
+Icon=tsm.png
+Terminal=false
+Type=Application
+Categories=System;ubuntu-at-unige;
+EOF
+    #
+    #
+    # DSM.SYS
+    cat  > ${DEB_BUILD}/etc/tsm/dsm.sys.example << EOF
+SErvername sos5
+ COMMMethod         TCPip
+ TCPPort           1505
+ TCPServeraddress  sos5.unige.ch
+ NODENAME          cb10-briner
+ PASSWORDACCESS    generate
+ SCHEDLOGRetention 7 D
+ PRENSChedulecmd     /${OPT_PATH}/bin/notify-send-tsm.start
+ POSTNSChedulecmd    /${OPT_PATH}/bin/notify-send-tsm.stop
+EOF
+    #
+    #
+    # DSM.OPT
+    cat  > ${DEB_BUILD}/etc/tsm/dsm.opt.example << EOF
+SErvername sos5
+DOMAIN     ALL-LOCAL
+EOF
+    #
+    #
+    # DEBIAN control
     cat > ${DEB_BUILD}/DEBIAN/control << EOF
 Package: ${DEBNAME}
 Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
+Depends: libnotify-bin, ubuntu-at-unige, zenity, ${SHORT_ORG,,}-${TSM_NAME,,}-ba
 Maintainer: ${EMAIL_MAINTAINER}
 Section: main
 Priority: extra
-Description: api for TSM @ ${SHORT_ORG}
- API Library for TSM
+Description: integration for TSM @ ${SHORT_ORG}
+ Integration for TSM
  TSM stands for Tivoli Storage Manager and it is a solution for backuping is
  machine at ${SHORT_ORG}.
 EOF
@@ -493,99 +585,6 @@ EOF
     fakeroot dpkg -b ${DEB_BUILD}
 }
 
-
-
-###########################################################
-# gskssl64
-#
-wrap_ssl()
-{
-    OBJ=ssl
-
-    # constructed variable
-    define_variable
-    DEB_VER=${ddeb_ver[${OBJ}]}
-    DEBNAME=${SHORT_ORG,,}-${TSM_NAME,,}-${OBJ}
-    DEB_BUILD=${TSM_ROOT}/${DEBNAME}_${TSM_VER}-${DEB_VER}
-
-    cd ${TSM_ROOT}
-
-    [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
-    mkdir -p ${DEB_BUILD}/{DEBIAN,${OPT_PATH}/tsm/gsk8_64,${OPT_PATH}/lib}
-    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/usr/local/ibm/gsk8_64/ ${DEB_BUILD}/${OPT_PATH}/tsm/gsk8_64/
-
-    # add library to /opt/uau/lib so that /opt/uau/tsm/client/ba/bin/dsmtca
-    cd ${DEB_BUILD}/${OPT_PATH}/lib
-    for dsmtcalib in $(ls -1 ../tsm/gsk8_64/lib64/*.so) ; do
-       ln -sf ${dsmtcalib}
-    done
-    cd -
-    
-    #
-    cat > ${DEB_BUILD}/DEBIAN/control << EOF
-Package: ${DEBNAME}
-Version: ${TSM_VER}-${DEB_VER}
-Architecture: amd64
-Maintainer: ${EMAIL_MAINTAINER}
-Section: main
-Priority: extra
-Description: gskssl64 for TSM @ ${SHORT_ORG}
- SSL Library for TSM
- TSM stands for Tivoli Storage Manager and it is a solution for backuping is
- machine at ${SHORT_ORG}.
-EOF
-    #
-    #
-    # construct the package
-    fakeroot dpkg -b ${DEB_BUILD}
-}
-    
-    
-    
-###########################################################
-# gskcrypt64
-#
-wrap_crypt()
-{
-    OBJ=crypt
-
-    # constructed variable
-    define_variable
-    DEB_VER=${ddeb_ver[${OBJ}]}
-    DEBNAME=${SHORT_ORG,,}-${TSM_NAME,,}-${OBJ}
-    DEB_BUILD=${TSM_ROOT}/${DEBNAME}_${TSM_VER}-${DEB_VER}
-
-    cd ${TSM_ROOT}
-
-    [ -d ${DEB_BUILD} ] && rm -fr ${DEB_BUILD}
-    mkdir -p ${DEB_BUILD}/{DEBIAN,${OPT_PATH}/tsm/gsk8_64,${OPT_PATH}/lib}
-    rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/usr/local/ibm/gsk8_64/ ${DEB_BUILD}/${OPT_PATH}/tsm/gsk8_64/
-
-    # add library to /opt/uau/lib so that /opt/uau/tsm/client/ba/bin/dsmtca
-    cd ${DEB_BUILD}/${OPT_PATH}/lib
-    for dsmtcalib in $(ls -1 ../tsm/gsk8_64/lib64/*.so) ; do
-       ln -sf ${dsmtcalib}
-    done
-    cd -
-
-    #
-    cat > ${DEB_BUILD}/DEBIAN/control << EOF
-Package: ${DEBNAME}
-Version: ${TSM_VER}-${DEB_VER}
-Architecture: amd64
-Maintainer: ${EMAIL_MAINTAINER}
-Section: main
-Priority: extra
-Description: gskcrypt64 for TSM @ ${SHORT_ORG}
-    Crypto Library for TSM
-    TSM stands for Tivoli Storage Manager and it is a solution for backuping is
-    machine at ${SHORT_ORG}.
-EOF
-    #
-    #
-    # construct the package
-    fakeroot dpkg -b ${DEB_BUILD}
-}
 
 
 ###########################################################
@@ -595,22 +594,22 @@ EOF
 echo "extract RPMs 2 directory with cpio"
 echo "=================================="
 cd ${TSM_ROOT}
-#rpm2dir
+rpm2dir
 
 echo -e "\nlet's rewrap them all"
 echo "======================="
 
 echo -e "\nwrap_ssl"
 echo "--------"
-#wrap_ssl
+wrap_ssl
 
 echo -e "\nwrap_crypt"
 echo "---------"
-#wrap_crypt
+wrap_crypt
 
 echo -e "\nwrap_api"
 echo "--------"
-#wrap_api
+wrap_api
 
 echo -e "\nwrap_ba"
 echo "-------"

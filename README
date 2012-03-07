@@ -12,13 +12,7 @@ prerequesite:
 usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
  - untar eg: into ~/ubuntu/tsm/6.3.0.0
  - download this script, and save it to ~/ubuntu/tsm/6.3.0.0
- - edit tsm4ubuntu with the deb version accordingly to the version you are.
-   Since, it should be you first time, then put this in define_variable
-   ddeb_ver["api"]="0"
-   ddeb_ver["crypt"]="0"
-   ddeb_ver["ssl"]="0"
-   ddeb_ver["ba"]="0"
-   ddeb_ver["integration"]="0"
+ - edit the variable defined in define_var in tsm4ubuntu
  - then type
    cd ~/ubuntu/tsm/6.3.0.0
    chmod +x tsm4ubuntu
