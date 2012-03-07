@@ -227,8 +227,7 @@ wrap_ba()
     mkdir -p ${DEB_BUILD}/{DEBIAN,usr/bin,var/log/tsm,etc/init.d,${OPT_PATH}/tsm/bin}
     mkdir -p ${DEB_BUILD}/{usr/share/pixmaps,usr/share/applications}
     rsync -aHl cpio_${drpm[${OBJ}]%.rpm}/opt/tivoli/tsm/ ${DEB_BUILD}/${OPT_PATH}/tsm/
-
-
+    #
     #
     # to remove the error:
     # ANS0102W Unable to open the message repository
@@ -270,6 +269,7 @@ chmod a+x ${DEB_BUILD}/${OPT_PATH}/tsm/bin/tsm-wrapper
     cat > ${DEB_BUILD}/etc/ld.so.conf.d/uau-tsm.conf << EOF
 /${OPT_PATH}/tsm/client/api/bin64
 /${OPT_PATH}/tsm/gsk8_64/lib64
+/${OPT_PATH}/lib
 EOF
     #
     #
@@ -595,33 +595,34 @@ EOF
 echo "extract RPMs 2 directory with cpio"
 echo "=================================="
 cd ${TSM_ROOT}
-rpm2dir
-
+#rpm2dir
 
 echo -e "\nlet's rewrap them all"
 echo "======================="
 
 echo -e "\nwrap_ssl"
 echo "--------"
-wrap_ssl
+#wrap_ssl
 
 echo -e "\nwrap_crypt"
 echo "---------"
-wrap_crypt
+#wrap_crypt
 
 echo -e "\nwrap_api"
 echo "--------"
-wrap_api
+#wrap_api
 
 echo -e "\nwrap_ba"
 echo "-------"
 wrap_ba
 
-# you can comment this without worry, since it is only related for
-# the University of Geneva. See the doc on github for more info
-#echo -e "\nwrap_integration"
-#echo "----------------"
-#wrap_integration
+if [[ "$1" == "unige" ]] ; then
+    # you can comment this without worry, since it is only related for
+    # the University of Geneva. See the doc on github for more info
+    echo -e "\nwrap_integration"
+    echo "----------------"
+    wrap_integration
+fi
 
 
 echo -e "\ncheck the new package created"
