@@ -595,7 +595,7 @@ EOF
 echo "extract RPMs 2 directory with cpio"
 echo "=================================="
 cd ${TSM_ROOT}
-#rpm2dir
+rpm2dir
 
 
 echo -e "\nlet's rewrap them all"
@@ -603,15 +603,15 @@ echo "======================="
 
 echo -e "\nwrap_ssl"
 echo "--------"
-#wrap_ssl
+wrap_ssl
 
 echo -e "\nwrap_crypt"
 echo "---------"
-#wrap_crypt
+wrap_crypt
 
 echo -e "\nwrap_api"
 echo "--------"
-#wrap_api
+wrap_api
 
 echo -e "\nwrap_ba"
 echo "-------"
@@ -619,8 +619,8 @@ wrap_ba
 
 # you can comment this without worry, since it is only related for
 # the University of Geneva. See the doc on github for more info
-echo -e "\nwrap_integration"
-echo "----------------"
+#echo -e "\nwrap_integration"
+#echo "----------------"
 #wrap_integration
 
 
