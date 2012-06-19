@@ -12,7 +12,7 @@ it adds:
  - dsmc and dsmj works also as a normal user
 
 prerequesite:
-- apt-get install fakeroot cpio rpm2cpio bash rsync convert
+- apt-get install fakeroot cpio rpm2cpio bash rsync imagemagick
 
 usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
  - untar eg: into ~/ubuntu/tsm/6.3.0.0
