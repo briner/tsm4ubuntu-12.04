@@ -3,7 +3,7 @@
 /  !  \   so, if `uname -m` == 'x86_64', then go for it
 -------
 
-This script mainly rewrap the rpm file so that you can use it on ubuntu. Furtermore,
+This script mainly rewraps the rpm file so that you can use it on ubuntu. Furthermore,
 it adds:
  - tsm init script
  - create entry in the menu for dsmj and dsmc
@@ -12,21 +12,23 @@ it adds:
  - dsmc and dsmj works also as a normal user
 
 prerequesite:
-- apt-get install fakeroot cpio rpm2cpio bash rsync imagemagick
+- apt-get install sysvinit-utils fakeroot cpio rpm2cpio bash rsync imagemagick
 
-usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
- - untar eg: into ~/ubuntu/tsm/6.3.0.0
- - download this script, and save it to ~/ubuntu/tsm/6.3.0.0
+usage: 
+ - download the version 6.3.1.0-TIV-TSMBAC-LinuxX86.tar (try downloading from http://www-01.ibm.com/support/docview.wss?rs=663&uid=swg21239415)
+ - untar eg: into ~/tsm/6.3.1.0
+ - download the script tsm4ubuntu and save it to ~/tsm/6.3.1.0
+ - edit /etc/tsm/dsm.opt and /etc/tsm/dsm.sys
  - edit the variable defined in define_var in tsm4ubuntu
  - then type
-   cd ~/ubuntu/tsm/6.3.0.0
+   cd ~/tsm/6.3.1.0
    chmod +x tsm4ubuntu
    ./tsm4ubuntu
    sudo dpkg -i *deb
  - and smile big time
 
 The script is splitted in:
-- define variable : self explanatory
+- define variable: self explanatory
 - rpm2dir: extract some of the rpms to cpio_<directories>
 - wrap_crypt: create the crypt package
 - wrap_ssl: create the ssl package
@@ -36,7 +38,7 @@ The script is splitted in:
   as we have developped code to automate the creation and the management of
   tsm account. So you don't need to care about this part
 
-So why did not we wrapped other RPMs ?
+So why did we not wrap the other RPMs ?
 Our decision is based on this document
 http://publib.boulder.ibm.com/infocenter/tsminfo/v6r3/index.jsp?topic=%2Fcom.ibm.itsm.client.doc%2Ft_inst_linuxx86client.html
  - *filepath* since it brings only filepath.ko for a special kernel
@@ -44,4 +46,4 @@ http://publib.boulder.ibm.com/infocenter/tsminfo/v6r3/index.jsp?topic=%2Fcom.ibm
  - *cit* since this looks like a real burden
  - FR since we speak english
 
-Hope it will helps.
+Hope it will help.
