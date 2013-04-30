@@ -14,9 +14,9 @@ it adds:
 prerequesite:
 - apt-get install fakeroot cpio rpm2cpio bash rsync imagemagick
 
-usage: download the version 6.3.0.0-TIV-TSMBAC-LinuxX86.tar
- - untar eg: into ~/ubuntu/tsm/6.3.0.0
- - download this script, and save it to ~/ubuntu/tsm/6.3.0.0
+usage: download the version 6.3.1.0-TIV-TSMBAC-LinuxX86.tar
+ - untar eg: into ~/tsm/6.3.1.0
+ - download this script, and save it to ~/tsm/6.3.1.0
  - edit /etc/tsm/dsm.opt and /etc/tsm/dsm.sys
  - edit the variable defined in define_var in tsm4ubuntu
  - then type

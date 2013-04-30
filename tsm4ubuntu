@@ -14,7 +14,7 @@ define_variable()
 {   
     # TSM_ROOT defines the path where the rpms are. tsm4ubuntu will work
     # in this directory
-    TSM_ROOT=~/dev/tsm/6.3.1.0
+    TSM_ROOT=~/tsm/6.3.1.0
 
     # the name of the package will be
     # <short_org>-<TSM_NAME>-{ba,api..}_<TSM_VER>-<DDEB_VER>
@@ -45,11 +45,11 @@ define_variable()
     # you should be "0" for your first time.
     unset ddeb_ver
     declare -Ag ddeb_ver
-    ddeb_ver["crypt"]="4"
-    ddeb_ver["ssl"]="4"
-    ddeb_ver["ba"]="4"
-    ddeb_ver["api"]="4"
-    ddeb_ver["integration"]="4" ; # this is only used at the University of Geneva
+    ddeb_ver["crypt"]="1"
+    ddeb_ver["ssl"]="1"
+    ddeb_ver["ba"]="1"
+    ddeb_ver["api"]="1"
+    ddeb_ver["integration"]="1" ; # this is only used at the University of Geneva
 }
 
 rpm2dir()
