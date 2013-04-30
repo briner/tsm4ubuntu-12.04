@@ -93,7 +93,7 @@ Package: ${DEBNAME}
 Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
 Maintainer: ${EMAIL_MAINTAINER}
-Section: main
+Section: non-free/contrib
 Priority: extra
 Description: gskcrypt64 for ${TSM_NAME} @ ${SHORT_ORG}
     Crypto Library for ${TSM_NAME}
@@ -134,7 +134,7 @@ Package: ${DEBNAME}
 Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
 Maintainer: ${EMAIL_MAINTAINER}
-Section: main
+Section: non-free/contrib
 Priority: extra
 Description: gskssl64 for ${TSM_NAME} @ ${SHORT_ORG}
  SSL Library for ${TSM_NAME}
@@ -187,7 +187,7 @@ Package: ${DEBNAME}
 Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
 Maintainer: ${EMAIL_MAINTAINER}
-Section: main
+Section: non-free/contrib
 Priority: extra
 Description: api for ${TSM_NAME} @ ${SHORT_ORG}
  API Library for ${TSM_NAME}
@@ -345,7 +345,7 @@ Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
 Depends: ${DEPENDS}
 Maintainer: ${EMAIL_MAINTAINER}
-Section: main
+Section: non-free/contrib
 Priority: extra
 Description: ba for ${TSM_NAME} @ ${SHORT_ORG}
  Backup Agent for ${TSM_NAME}
@@ -584,7 +584,7 @@ Version: ${TSM_VER}-${DEB_VER}
 Architecture: amd64
 Depends: libnotify-bin, ubuntu-at-unige, zenity, ${SHORT_ORG,,}-${TSM_NAME,,}-ba
 Maintainer: ${EMAIL_MAINTAINER}
-Section: main
+Section: non-free/contrib
 Priority: extra
 Description: integration for TSM @ ${SHORT_ORG}
  Integration for TSM
