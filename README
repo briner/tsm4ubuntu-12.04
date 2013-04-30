@@ -12,7 +12,7 @@ it adds:
  - dsmc and dsmj works also as a normal user
 
 prerequesite:
-- apt-get install fakeroot cpio rpm2cpio bash rsync imagemagick
+- apt-get install sysvinit-utils fakeroot cpio rpm2cpio bash rsync imagemagick
 
 usage: 
  - download the version 6.3.1.0-TIV-TSMBAC-LinuxX86.tar (try downloading from http://www-01.ibm.com/support/docview.wss?rs=663&uid=swg21239415)

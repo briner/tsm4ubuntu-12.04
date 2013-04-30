@@ -276,10 +276,12 @@ EOF
     #
     if [[ "$MODE" == "dsmcad" ]] ; then
     	    TSM_BIN=/usr/bin/dsmcad
-    	    DAEMON_START_COMMAND='start-stop-daemon --start --quiet --pidfile ${PIDFILE} --exec ${DAEMON} || log_end_msg 1'
+    	    DAEMON_START_COMMAND='start-stop-daemon --start --quiet --pidfile ${PIDFILE} --startas ${DAEMON} || log_end_msg 1'
+    	    DAEMON_PID_COMMAND='pidof -s dsmcad > $PIDFILE'
     else
     	    TSM_BIN=/usr/bin/dsmc
-    	    DAEMON_START_COMMAND='start-stop-daemon -Sqb --startas /usr/bin/dsmc --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- schedule || log_end_msg 1'
+    	    DAEMON_START_COMMAND='start-stop-daemon -Sqb --startas ${DAEMON} --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- schedule || log_end_msg 1'
+    	    DAEMON_PID_COMMAND='echo "no action" >/dev/null'
     fi
     # INIT SCRIPT
     cat > ${DEB_BUILD}/etc/init.d/tsm << EOF
@@ -305,6 +307,7 @@ start_tsm()
     log_begin_msg "Starting TSM scheduler ..."
     mkdir -p \${DSM_LOG}
     $DAEMON_START_COMMAND
+    $DAEMON_PID_COMMAND
     log_end_msg 0
 }
 stop_tsm()
