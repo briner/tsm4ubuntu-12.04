@@ -14,27 +14,29 @@ define_variable()
 {   
     # TSM_ROOT defines the path where the rpms are. tsm4ubuntu will work
     # in this directory
-    TSM_ROOT=~/ubuntu/tsm/6.3.0.0
+    TSM_ROOT=~/dev/tsm/6.3.1.0
 
     # the name of the package will be
     # <short_org>-<TSM_NAME>-{ba,api..}_<TSM_VER>-<DDEB_VER>
-    # so for the current case: unige-tsm-ba_6.3.0-2.deb
     TSM_NAME=TSM ; # usually it is "TSM"
-    TSM_VER=6.3.0
-    SHORT_ORG=UniGE ; # a short name of your organisation
+    TSM_VER=6.3.1
+    SHORT_ORG=UiS ; # a short name of your organisation
 
     # where the tsm files will be installed without the first and the last "/"
-    OPT_PATH='opt/uau/tsm' ; # usually it is "opt/tivoli/tsm"
+    OPT_PATH='opt/tivoli/tsm' ; # usually it is "opt/tivoli/tsm"
 
     # email of the packager of these
-    EMAIL_MAINTAINER='Cedric BRINER <Cedric.Briner@UniGE.ch>'
+    EMAIL_MAINTAINER='Martin Goldhahn <martin.goldhahn@uis.no>'
+    
+    # should the init script use dsmc or dsmcad
+    MODE=dsmcad
     
     #
     # this variable define the name of the rpm for each element 
     unset drpm
     declare -Ag drpm
-    drpm["crypt"]="gskcrypt64-8.0.14.11.linux.x86_64.rpm"
-    drpm["ssl"]="gskssl64-8.0.14.11.linux.x86_64.rpm"
+    drpm["crypt"]="gskcrypt64-8.0.14.14.linux.x86_64.rpm"
+    drpm["ssl"]="gskssl64-8.0.14.14.linux.x86_64.rpm"
     drpm["api"]="TIVsm-API64.x86_64.rpm"
     drpm["ba"]="TIVsm-BA.x86_64.rpm"
 
@@ -43,11 +45,11 @@ define_variable()
     # you should be "0" for your first time.
     unset ddeb_ver
     declare -Ag ddeb_ver
-    ddeb_ver["crypt"]="1" 
-    ddeb_ver["ssl"]="1"
-    ddeb_ver["ba"]="3"
-    ddeb_ver["api"]="1"
-    ddeb_ver["integration"]="3" ; # this is only used at the University of Geneva
+    ddeb_ver["crypt"]="4"
+    ddeb_ver["ssl"]="4"
+    ddeb_ver["ba"]="4"
+    ddeb_ver["api"]="4"
+    ddeb_ver["integration"]="4" ; # this is only used at the University of Geneva
 }
 
 rpm2dir()
@@ -55,7 +57,7 @@ rpm2dir()
     define_variable
     for rpm in ${drpm[*]} ; do
         cd ${TSM_ROOT}
-	    d=cpio_${rpm%.rpm}
+        d=cpio_${rpm%.rpm}
         [ -d $d ] && rm -fr $d
         echo "extracting $rpm in $d" 
         mkdir $d
@@ -244,8 +246,8 @@ wrap_ba()
 # dsmj can use openjdk wahou # to force the use of Sun's Java
 # dsmj can use openjdk wahou # export PATH=/usr/lib/jvm/java-6-sun/bin/:$PATH
 export DSM_DIR=/${OPT_PATH}/client/ba/bin/
-export LANG=en_US
-export LC_TYPE=en_US
+export LANG=en_US.UTF-8
+export LC_TYPE=en_US.UTF-8
 export LD_LIBRARY_PATH="/${OPT_PATH}/client/api/bin64:\
 /${OPT_PATH}/gsk8/lib/:\
 /${OPT_PATH}/lib/"
@@ -272,20 +274,27 @@ EOF
     cd ${TSM_ROOT}
     #
     #
+    if [[ "$MODE" == "dsmcad" ]] ; then
+    	    TSM_BIN=/usr/bin/dsmcad
+    	    DAEMON_START_COMMAND='start-stop-daemon --start --quiet --pidfile ${PIDFILE} --exec ${DAEMON} || log_end_msg 1'
+    else
+    	    TSM_BIN=/usr/bin/dsmc
+    	    DAEMON_START_COMMAND='start-stop-daemon -Sqb --startas /usr/bin/dsmc --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- schedule || log_end_msg 1'
+    fi
     # INIT SCRIPT
-    cat > ${DEB_BUILD}/etc/init.d/tsm << 'EOF'
+    cat > ${DEB_BUILD}/etc/init.d/tsm << EOF
 #!/bin/bash
 ### BEGIN INIT INFO
 # Provides:          tsm
-# Required-Start:    $local_fs $remote_fs $network $syslog
-# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Required-Start:    \$local_fs \$remote_fs \$network \$syslog
+# Required-Stop:     \$local_fs \$remote_fs \$network \$syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Start daemon at boot time
 # Description:       Enable service provided by tsm.
 ### END INIT INFO
 
-DAEMON=/usr/bin/dsmc
+DAEMON=${TSM_BIN}
 DSM_LOG=/var/log/tsm
 PIDFILE=/var/run/tsm.pid
 
@@ -294,18 +303,18 @@ PIDFILE=/var/run/tsm.pid
 start_tsm()
 {
     log_begin_msg "Starting TSM scheduler ..."
-    mkdir -p ${DSM_LOG}
-    start-stop-daemon -Sqb --startas /usr/bin/dsmc --pidfile ${PIDFILE} --make-pidfile --chdir ${DSM_LOG} -- schedule || log_end_msg 1
+    mkdir -p \${DSM_LOG}
+    $DAEMON_START_COMMAND
     log_end_msg 0
 }
 stop_tsm()
 {
     log_begin_msg "Stopping TSM scheduler ..."
-    start-stop-daemon -Kqop ${PIDFILE} || log_end_msg 1
+    start-stop-daemon -Kqop \${PIDFILE} || log_end_msg 1
     log_end_msg 0
 }
 
-case "$1" in
+case "\$1" in
   start)
     start_tsm
     ;;
@@ -594,6 +603,8 @@ EOF
 # main
 #
 
+define_variable
+
 echo "extract RPMs 2 directory with cpio"
 echo "=================================="
 cd ${TSM_ROOT}
@@ -629,5 +640,5 @@ fi
 
 echo -e "\ncheck the new package created"
 echo      "============================="
-echo "do fo eg: sudo dpkg -i *deb"
+echo "install packages with: sudo dpkg -i *deb"
 
