@@ -1,7 +1,34 @@
-  /!\   
- / ! \    this will only work to create deb for amd64 
-/  !  \   so, if `uname -m` == 'x86_64', then go for it
--------
+the new version of this tool is on github
+
+https://github.com/briner/tsm2deb
+
+This new version allow as mainly 2 big differences :
+ - it is able to do a one single big package
+ - it is has now option so that you can built only a part of tsm (eg:crypto)
+ - the integration part used at unige, is a tool that let's user to easily
+   configure their tsm, by providing the nodename and a password. This tools
+   use a file servers.txt that is a list of:tcspserveraddress port such as
+```
+servertsm1.example.com 1001
+servertsm2.example.com 1002
+servertsm3.example.com 1003
+servertsm4.example.com 1004
+```
+
+for ubuntu trusty 14.4 (14.04) prefer the branch 7.1
+https://github.com/briner/tsm2deb/tree/7.1.0.1
+
+----------------------------------------------------
+
+If you find this script usefull, please, consider a recommendation on LinkedIn
+with my email briner@infomaniak.ch.
+
+-----------------------------------------------------
+    .
+   /!\   
+  / ! \    this will only work to create deb for amd64 
+ /  !  \   so, if `uname -m` == 'x86_64', then go for it
+ -------
 
 This script mainly rewraps the rpm file so that you can use it on ubuntu. Furthermore,
 it adds:
@@ -11,8 +38,13 @@ it adds:
    tsm as daemon if dsm.sys and the tsm server are configured for schedule.
  - dsmc and dsmj works also as a normal user
 
+<<<<<<< HEAD
+prerequisite:
+- apt-get install fakeroot cpio rpm2cpio bash rsync imagemagick
+=======
 prerequesite:
 - apt-get install sysvinit-utils fakeroot cpio rpm2cpio bash rsync imagemagick
+>>>>>>> e10c22a17d9b57b4ea477a7f921654116dce7866
 
 usage: 
  - download the version 6.3.1.0-TIV-TSMBAC-LinuxX86.tar (try downloading from http://www-01.ibm.com/support/docview.wss?rs=663&uid=swg21239415)
@@ -46,4 +78,8 @@ http://publib.boulder.ibm.com/infocenter/tsminfo/v6r3/index.jsp?topic=%2Fcom.ibm
  - *cit* since this looks like a real burden
  - FR since we speak english
 
+<<<<<<< HEAD
+Hope it helps.
+=======
 Hope it will help.
+>>>>>>> e10c22a17d9b57b4ea477a7f921654116dce7866
